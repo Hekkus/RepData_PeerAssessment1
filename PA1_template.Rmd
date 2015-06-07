@@ -28,7 +28,7 @@ Histogram of the total number of steps taken each day
 ```{r echo = T}
 library(ggplot2)
 ggplot()+
-geom_histogram(aes(sum_day), binwidth = 2000)+
+        geom_histogram(aes(sum_day), binwidth = 2000)+
         ggtitle("fig. 1 - Distribution of total number of steps taken each day")+
         xlab("total number of steps taken each day")
 ```
@@ -56,7 +56,7 @@ ggplot()+geom_line(aes(as.numeric(names(mean_interval)), mean_interval))+
 
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps.
 ```{r}
-names(mean_interval[max(mean_interval)])
+names(subset(mean_interval, mean_interval == max(mean_interval)))
 ```
 
 ## Imputing missing values
@@ -65,27 +65,13 @@ Total number of missing values in the dataset.
 ```{r}
 colSums(is.na(data))
 ```
-
-Devise a strategy for filling in all of the missing values.
-```{r}
-mean_day <- tapply(data$steps, data$date, mean, na.rm = TRUE)
-median_day <- tapply(data$steps, data$date, median, na.rm = TRUE)
-test <- subset(data, !is.na(data$steps))
-for (i in 1:length(test$steps)) {
-        test$mean_interval[i] <- mean_interval[as.character(test[i,3])]
-        test$mean_day[i] <- mean_day[as.character(test[i,2])]
-        test$median_day[i] <- median_day[as.character(test[i,2])]
-        }
-summary(test[,c(1,4,5,6)])
-```
-Mean for 5-minute interval looks the better choice here. 
  
 Filling missing values with mean for that 5-minute interval.
 ```{r}
 data2 <- data
 for (i in 1:length(data2$steps)) {
         if (is.na(data2[i,1])) {
-        data2[i,1] <- mean_interval[as.character(data2[i,3])]}
+                data2[i,1] <- round(mean_interval[as.character(data2[i,3])])}
         }
 ```
 
@@ -93,7 +79,7 @@ Histogram of the total number of steps taken each day with filled Missing Values
 ```{r echo = TRUE}
 sum_day2 <- tapply(data2$steps, data2$date, FUN = sum, na.rm = TRUE)
 ggplot()+
-geom_histogram(aes(sum_day2), binwidth = 2000)+
+        geom_histogram(aes(sum_day2), binwidth = 2000)+
         ggtitle("fig. 3 - Distribution of total number of steps taken each day 
                 with filled Missing Values")+
         xlab("total number of steps taken each day")
@@ -113,9 +99,10 @@ median(sum_day2)
 options(scipen=999)
 ```
 
-These values differ from the estimates done before filling the Missing Values:
-- mean of the total number of steps taken each day increased from `r round(mean(sum_day))` to `r round(mean(sum_day2))`
-- median of the total number of steps taken each day increased from `r round(median(sum_day))` to `r round(median(sum_day2))`
+These values differ from the estimates done before filling the Missing Values: 
+
+- mean of the total number of steps taken each day increased from `r round(mean(sum_day))` to `r round(mean(sum_day2))` 
+- median of the total number of steps taken each day increased from `r round(median(sum_day))` to `r round(median(sum_day2))` 
 
 Also the distribution of the total daily number of steps is different, as you can see below there are less between 0 and 2500 and more between 10.000 and 12.500.
 ```{r echo = TRUE}
@@ -125,7 +112,7 @@ comparison <- rbind(data.frame(sum = sum_day,missing_values = "ignored"),
 ggplot(comparison, aes(x=sum, fill=missing_values)) +
         geom_histogram(binwidth=2000, position="dodge")+
         ggtitle("fig. 4 - Distribution of total number of steps taken each day 
-             with Ignored or Filled Missing Values")+
+                with Ignored or Filled Missing Values")+
         xlab("total number of steps taken each day")
 ```
 
@@ -133,7 +120,8 @@ ggplot(comparison, aes(x=sum, fill=missing_values)) +
 
 Introduce a new factor variable for weekdays and weekends.
 ```{r echo = TRUE}
-data2$weekday <- as.factor((weekdays(data2$date) == "domenica") + (weekdays(data2$date) == "sabato"))
+Sys.setlocale("LC_TIME", "English")
+data2$weekday <- as.factor((weekdays(data2$date) == "Friday") + (weekdays(data2$date) == "Saturday"))
 levels(data2$weekday) <- c("weekday", "weekend")
 ```
 
@@ -142,5 +130,5 @@ Plot the time series of the average number of steps taken for interval across al
 ggplot(data2, aes(x = interval, y = steps)) + stat_summary(fun.y = mean, geom = "line")+ 
         facet_grid(weekday~.)+
         ggtitle("fig. 5 - Time series of the average number of steps taken for interval 
-             across all weekday days or weekend days")
+                across all weekday days or weekend days")
 ```
